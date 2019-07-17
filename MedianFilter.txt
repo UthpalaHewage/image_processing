@@ -1,0 +1,79 @@
+//Median Filter
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("noise1.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat med = Gr.clone(); //Copy of the image of histogram equalization
+	int value = 0;
+	int ar1[9];
+
+
+	for (int i = 1; i < h - 1; i++) { //take median of 3x3
+		for (int j = 1; j < w - 1; j++) {
+			int r = 0;
+			for (int t1 = -1; 1 >= t1; t1++) {
+				for (int t2 = -1; 1 >= t2; t2++) {
+					value = Gr.at<uchar>(i + t1, j + t2);
+					ar1[r] = value;
+					r = r + 1;
+				}
+			}
+			sort(ar1, ar1 + 9);//sort to select median value;
+			med.at<uchar>(i, j) = (uchar)ar1[4];// select 5th element as median
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display histogram equalized image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display histogram equalized image", med);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display histogram equalized image");
+
+
+	image.release();
+	Gr.release();
+	med.release();
+
+	return 0;
+
+
+}

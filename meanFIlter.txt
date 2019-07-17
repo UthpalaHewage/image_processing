@@ -1,0 +1,82 @@
+//Mean Filter
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\cxcore.h>
+#include <opencv\highgui.h>
+#include <opencv\cvaux.h>
+#include <opencv2\opencv.hpp>
+#include <opencv2\highgui\highgui.hpp>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("noise.jpg", 3);			//take salt pepper image
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat MeanFiltered = Gr.clone(); //Copy of the image of histogram equalization
+	int value = 0;		
+	double avg = 0.0;
+
+	for (int i = 1; i < h - 1; i++) {
+		for (int j = 1; j < w - 1; j++) {
+			value = 0;		//to nulll the calculation on kernal
+			for (int t1 = -1; 1 >= t1; t1++) {
+				for (int t2 = -1; 1 >= t2; t2++)
+				{
+					value = value + Gr.at<uchar>(i + t1, j + t2); //get mean of 3x3 area
+				}
+			}
+			
+			avg = (double)value / 9.0;
+			MeanFiltered.at<uchar>(i, j) = (uchar)cvRound(avg);
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display mean filtered image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display mean filtered image", MeanFiltered);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display mean filtered image");
+
+
+	image.release();
+	Gr.release();
+	MeanFiltered.release();
+
+	return 0;
+
+
+}

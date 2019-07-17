@@ -1,0 +1,102 @@
+//Edge Detection - Robert(Using Array)
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+#include <cmath>
+
+using namespace cv;
+using  namespace std;
+//Successive Difference Operator
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("edge.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat EdgeImage = Gr.clone(); //Copy of the image of histogram equalization
+
+	int robertx[2][2] = {
+	{-1,0},
+	{0,1}
+	};
+
+	int roberty[2][2] = {
+	{0,-1},
+	{1,0}
+	};
+
+
+	int Gx = 0;
+	int Gy = 0;
+	int G = 0;
+	int T = 25;
+
+
+	for (int i = 0; i < h - 1; i++) { //take median of 3x3
+		for (int j = 0; j < w - 1; j++) {
+			Gx = 0;
+			Gy = 0;
+			for (int t1 = 0; t1 < 2; t1++) {
+				for (int t2 = 0; t2 < 2; t2++) {
+					Gx += Gr.at<uchar>(i + t1, j + t2)*robertx[t1][t2];//multiply with kernal1
+					Gy += Gr.at<uchar>(i + t1, j + t2)*roberty[t1][t2];//multiply with kernal1
+				}
+			}
+			Gx = pow(Gx, 2);
+			Gy = pow(Gy, 2);
+			G = pow((Gx + Gy), 0.5);
+
+			if (G <= T) {
+				EdgeImage.at<uchar>(i, j) = 0;
+			}
+			else {
+				EdgeImage.at<uchar>(i, j) = 255;
+			}
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display Robert Edged image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display Robert Edged image", EdgeImage);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display Robert Edged image");
+
+
+	image.release();
+	Gr.release();
+	EdgeImage.release();
+
+	return 0;
+
+
+}

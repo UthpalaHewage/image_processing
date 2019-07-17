@@ -1,0 +1,105 @@
+//Mode
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\cxcore.h>
+#include <opencv\highgui.h>
+#include <opencv\cvaux.h>
+#include <opencv2\opencv.hpp>
+#include <opencv2\highgui\highgui.hpp>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("noise.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+  //Mode Filter
+	Mat modeFiltered = Gr.clone();
+	int ar1[9];
+	int count = 0;
+	for (int i = 1; i < h - 1; i++) {
+		for (int j = 1; j < w - 1; j++)
+		{
+			count = 0;
+			for (int t1 = -1; t1 <= 1; t1++) {
+				for (int t2 = -1; t2 <= 1; t2++) {
+					ar1[count] = Gr.at<uchar>(i + t1, j + t2);
+					count++;
+				}
+			}
+			sort(ar1, ar1 + 9);
+
+			//calculating mode
+			int number = ar1[0];
+			int mode = number;
+			int count = 1;
+			int countMode = 1;
+
+			for (int i = 1; i < 9; i++)
+			{
+				if (ar1[i] == number)
+				{
+					++count;
+				}
+				else
+				{
+					if (count > countMode)
+					{
+						countMode = count;
+						mode = number;
+					}
+					count = 1;
+					number = ar1[i];
+				}
+			}
+			modeFiltered.at<uchar>(i, j) = mode;
+		}
+	}
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display histogram equalized image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display histogram equalized image", modeFiltered);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display histogram equalized image");
+
+
+	image.release();
+	Gr.release();
+	modeFiltered.release();
+
+	return 0;
+
+
+}

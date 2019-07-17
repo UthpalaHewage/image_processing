@@ -1,0 +1,145 @@
+//GaussianSobel
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("sammy_noise.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat GusssianSmooth = Gr.clone();
+
+	//Gaussian kernel
+	double gaussianKernal[5][5] = {
+	{1.0 / 273, 4.0 / 273, 7.0 / 273, 4.0 / 273, 1.0 / 273},
+	{4.0 / 273, 16.0 / 273, 26.0 / 273, 16.0 / 273, 4.0 / 273},
+	{7.0 / 273, 26.0 / 273, 41.0 / 273, 26.0 / 273, 7.0 / 273},
+	{4.0 / 273, 16.0 / 273, 26.0 / 273, 16.0 / 273, 4.0 / 273},
+	{1.0 / 273, 4.0 / 273, 7.0 / 273, 4.0 / 273, 1.0 / 273}
+	};
+
+	//print Gaussin Kernal
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 5; j++) {
+			printf("%f ", gaussianKernal[i][j]);
+		}
+		cout << "" << endl;
+	}
+
+	double value = 0.0;
+
+	for (int i = 2; i < h - 2; i++) {
+		for (int j = 2; j < w - 2; j++) {
+			value = 0.0;
+			for (int t1 = 0; t1 < 5; t1++) {
+				for (int t2 = 0; t2 < 5; t2++) {
+					value += Gr.at<uchar>(i + t1 - 2, j + t2 - 2)*gaussianKernal[t1][t2];//multiply with gaussian
+				}
+			}
+
+			GusssianSmooth.at<uchar>(i, j) = cvRound(value);
+		}
+	}
+
+	Mat SobelEdge = GusssianSmooth.clone();
+
+	int sobelx[3][3] = {
+	{-1,-2,-1},
+	{0,0,0},
+	{1,2,1}
+	};
+
+	int sobely[3][3] = {
+	{-1,0,1},
+	{-2,0,2},
+	{-1,0,1}
+	};
+
+
+	int Gx = 0;
+	int Gy = 0;
+	int G = 0;
+	int T = 150;
+
+
+
+
+	for (int i = 1; i < h - 1; i++) { //take median of 3x3
+		for (int j = 1; j < w - 1; j++) {
+			Gx = 0;
+			Gy = 0;
+			for (int t1 = 0; t1 < 3; t1++) {
+				for (int t2 = 0; t2 < 3; t2++) {
+					Gx += GusssianSmooth.at<uchar>(i + t1 - 1, j + t2 - 1)*sobelx[t1][t2];//multiply with kernal1
+					Gy += GusssianSmooth.at<uchar>(i + t1 - 1, j + t2 - 1)*sobely[t1][t2];//multiply with kernal1
+				}
+			}
+			Gx = pow(Gx, 2);
+			Gy = pow(Gy, 2);
+			G = pow((Gx + Gy), 0.5);
+
+			if (G <= T) {
+				SobelEdge.at<uchar>(i, j) = 0;
+			}
+			else {
+				SobelEdge.at<uchar>(i, j) = 255;
+			}
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Gaussian Smooth", WINDOW_AUTOSIZE);
+	namedWindow("Sobel Edge Detection", WINDOW_AUTOSIZE);
+
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Gaussian Smooth", GusssianSmooth);
+	imshow("Sobel Edge Detection", SobelEdge);
+
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Gaussian Smooth");
+	cvDestroyWindow("Sobel Edge Detection");
+
+
+	image.release();
+	Gr.release();
+	GusssianSmooth.release();
+	SobelEdge.release();
+
+	return 0;
+
+
+}

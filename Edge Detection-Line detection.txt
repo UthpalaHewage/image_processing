@@ -1,0 +1,123 @@
+//Edge Detection-Line detection
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+//Successive Difference Operator
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("edge.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat EdgeImage = Gr.clone(); //Copy of the image of histogram equalization
+	int R1 = 0;
+	int R2 = 0;
+	int R3 = 0;
+	int R4 = 0;
+
+	int T = 60;		//the threshold value should be declared manually
+
+	//these the predefined values for the kernals
+
+	double Kernal1[5][5] = {
+	{-1,-1,-1},
+	{2,2,2},
+	{-1,-1,-1}
+	};
+	double Kernal2[5][5] = {
+	{-1,-1,2},
+	{-1,2,-1},
+	{2,-1,-1}
+	};
+	double Kernal3[5][5] = {
+	{-1,2,-1},
+	{-1,2,-1},
+	{-1,2,-1}
+	};
+	double Kernal4[5][5] = {
+	{2,-1,-1},
+	{-1,2,-1},
+	{-1,-1,2}
+	};
+	int arr[4];
+
+	for (int i = 1; i < h - 1; i++) { //take median of 3x3
+		for (int j = 1; j < w - 1; j++) {
+			R1 = 0;
+			R2 = 0;
+			R3 = 0;
+			R4 = 0;
+
+			for (int t1 = 0; t1 < 3; t1++) {
+				for (int t2 = 0; t2 < 3; t2++) {
+					R1 += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*Kernal1[t1][t2];//multiply with kernal1
+					R2 += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*Kernal2[t1][t2];//multiply with kernal2
+					R3 += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*Kernal3[t1][t2];//multiply with kernal3
+					R4 += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*Kernal4[t1][t2];//multiply with kernal4
+				}
+			}
+
+			arr[0] = R1;
+			arr[1] = R2;
+			arr[2] = R3;
+			arr[3] = R4;
+
+			sort(arr, arr + 4);
+
+			if (arr[3] <= T) {
+				EdgeImage.at<uchar>(i, j) = 0;
+			}
+			else {
+				EdgeImage.at<uchar>(i, j) = 255;
+			}
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display line detected image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display line detected image", EdgeImage);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display line detected image");
+
+
+	image.release();
+	Gr.release();
+	EdgeImage.release();
+
+	return 0;
+
+
+}

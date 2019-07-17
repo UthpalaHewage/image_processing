@@ -1,0 +1,120 @@
+//histogram equalization
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("lowC.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+	int val = 0;
+	int N = h * w; //number of pixels in the image
+
+	Mat HistEqua = Gr.clone(); //Copy of the image of histogram equalization
+
+	int his[256]; //array to hold gray level
+
+	double pr[256]; //keep probabilty of color level
+
+	double CuPr[256]; //keep cummilative probabilty of color level
+
+	int roundedNewLevel[256]; //sk*m
+
+	for (int i = 0; i < 256; i++) {// initilize array element to 0
+		his[i] = 0;
+		pr[i] = 0.0;
+		CuPr[i] = 0.0;
+		roundedNewLevel[i] = 0;
+	}
+
+	cout << "Array intialized" << endl;
+
+	//to calculate the histogram
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			val = Gr.at<uchar>(i, j);
+			his[val] = his[val] + 1;
+		}
+	}
+
+	cout << "histogram Calculated" << endl;
+
+	//calculate probability and CPD and sk*m with round
+	for (int i = 0; i < 256; i++) {
+
+		pr[i] = (double)(his[i] * 1.0) / N;
+
+		if (i == 0) {
+			CuPr[i] = pr[i];
+		}
+		else {
+			CuPr[i] = CuPr[i - 1] + pr[i];
+		}
+
+		roundedNewLevel[i] = cvRound(CuPr[i] * 255.0);
+	}
+	cout << "probabilty cupr and new rounded values" << endl;
+
+	//Histogram Equalization
+	val = 0;
+	int newVal = 0;
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+
+			val = HistEqua.at<uchar>(i, j);
+			newVal = roundedNewLevel[val];
+			HistEqua.at<uchar>(i, j) = (uchar)newVal;
+		}
+	}
+
+
+
+
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display histogram equalized image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display histogram equalized image", HistEqua);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display histogram equalized image");
+
+
+	image.release();
+	Gr.release();
+	HistEqua.release();
+
+	return 0;
+
+
+}

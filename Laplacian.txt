@@ -1,0 +1,101 @@
+//Laplacian 
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+#include <cmath>
+
+using namespace cv;
+using  namespace std;
+//Successive Difference Operator
+int main(int argc, char** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("edge.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat EdgeImage = Gr.clone(); //Copy of the image of histogram equalization
+
+	//first order derivative
+	/*int laplacianKernal[3][3] = {
+	{0,-1,0},
+	{-1,4,-1},
+	{0,-1,0}
+	};*/
+
+	//second order derivative
+	int laplacianKernal[3][3] = {
+  {-1,-1,-1},
+  {-1,8,-1},
+  {-1,-1,-1}
+	};
+
+
+
+
+	int G = 0;
+	int T =82;
+
+
+
+	for (int i = 1; i < h - 1; i++) { //take median of 3x3
+		for (int j = 1; j < w - 1; j++) {
+			G = 0;
+			for (int t1 = 0; t1 < 3; t1++) {
+				for (int t2 = 0; t2 < 3; t2++) {
+					G += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*laplacianKernal[t1][t2];//multiply with kernal1    
+				}
+			}
+			if (G <= T) {
+				EdgeImage.at<uchar>(i, j) = 0;
+			}
+			else {
+				EdgeImage.at<uchar>(i, j) = 255;
+			}
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display histogram equalized image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display histogram equalized image", EdgeImage);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display histogram equalized image");
+
+
+	image.release();
+	Gr.release();
+	EdgeImage.release();
+
+	return 0;
+
+
+}

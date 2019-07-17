@@ -1,0 +1,102 @@
+//Sharpening
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("moon.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat Sharpen = Gr.clone();
+
+	//Gaussian kernel
+	double sharpenKernal[3][3] = {
+	{-1,-1,-1},
+	{-1,8,-1},
+	{-1,-1,-1},
+	};
+
+	//print sharpen Kernal
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			printf("%f ", sharpenKernal[i][j]);
+		}
+		cout << "" << endl;
+	}
+
+	double value = 0.0;
+
+	for (int i = 1; i < h - 1; i++) {
+		for (int j = 1; j < w - 1; j++) {
+			value = 0.0;
+			for (int t1 = 0; t1 < 3; t1++) {
+				for (int t2 = 0; t2 < 3; t2++) {
+					value += Gr.at<uchar>(i + t1 - 1, j + t2 - 1)*sharpenKernal[t1][t2];
+					
+				}
+			}
+			if (cvRound(value) < 0) {
+				Sharpen.at<uchar>(i, j) = 0;
+			}
+			else if (cvRound(value) > 255) {
+				Sharpen.at<uchar>(i, j) = 255;
+			}
+			else {
+				Sharpen.at<uchar>(i, j) = cvRound(value);
+			}
+			
+		}
+	}
+
+
+	Mat diff_im = Gr + Sharpen;
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Sharpen", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Sharpen", diff_im);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Sharpen");
+
+
+	image.release();
+	Gr.release();
+	Sharpen.release();
+
+	return 0;
+
+
+}

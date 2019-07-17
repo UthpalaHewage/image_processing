@@ -1,0 +1,80 @@
+//Edge detection-successive difference
+
+#include <iostream>
+#include <stdio.h>
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+using namespace cv;
+using  namespace std;
+//Successive Difference Operator
+int main(int argc, char ** argv) {
+
+	if (argc != 2) {
+		cout << "Usage: Display_image ImageToLOoadAndDisplay \n" << std::endl;
+	}
+
+	Mat image;
+	//image = imread(argv[1], IMREAD_COLOR); //compile using cmd
+	image = imread("edge.jpg", 3);
+
+	if (!image.data) {
+
+		cout << "Could not open or find the image \n" << std::endl;
+		return -1;
+	}
+
+	Mat Gr;
+
+	cvtColor(image, Gr, CV_BGR2GRAY); //convert to gray
+
+	int h = Gr.rows;
+	int w = Gr.cols;
+
+	int N = h * w; //number of pixels in the image
+
+	Mat EdgeImage = Gr.clone(); //Copy of the image of histogram equalization
+	int Gx = 0;
+	int Gy = 0;
+	int G = 0;
+	int T = 20;
+
+
+	for (int i = 0; i < h - 1; i++) { //take median of 3x3
+		for (int j = 0; j < w - 1; j++) {
+			Gx = Gr.at<uchar>(i, j) - Gr.at<uchar>(i, j + 1);
+			Gy = Gr.at<uchar>(i, j) - Gr.at<uchar>(i + 1, j);
+			G = abs(Gx) + abs(Gy);
+			if (G >= T) {
+				EdgeImage.at<uchar>(i, j) = 0;
+			}
+			else {
+				EdgeImage.at<uchar>(i, j) = 255;
+			}
+		}
+	}
+
+
+	namedWindow("Display window", WINDOW_AUTOSIZE);;
+	namedWindow("Display Gray", WINDOW_AUTOSIZE);
+	namedWindow("Display edged detected image", WINDOW_AUTOSIZE);
+
+	imshow("Display window", image);
+	imshow("Display Gray", Gr);
+	imshow("Display edged detected image", EdgeImage);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Display window");
+	cvDestroyWindow("Display Gray");
+	cvDestroyWindow("Display edged detected image");
+
+
+	image.release();
+	Gr.release();
+	EdgeImage.release();
+
+	return 0;
+
+
+}
